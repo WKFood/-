@@ -373,14 +373,13 @@
         }
     ];
 
-    // ฟังก์ชันปรับข้อความภาษาไทยให้ได้มาตรฐานเดียวกัน (แก้ปัญหาสระ/วรรณยุกต์สลับลำดับ)
-    function cleanText(str) {
-        if (!str) return '';
-        return str
-            .normalize('NFD') // แยกส่วนสระและวรรณยุกต์
-            .replace(/[\u0300-\u036f]/g, '') // ลบอักขระพิเศษ
-            .toLowerCase()
-            .trim();
+    // ฟังก์ชันลบสระ/วรรณยุกต์ไทยเพื่อเปรียบเทียบคำให้เจอแม้มันจะพิมพ์เพี้ยน
+    function removeToneMarks(text) {
+        if (!text) return '';
+        // แปลง สระอำ ให้เป็น สระอา เพื่อให้ค้นหาง่ายขึ้น
+        let str = text.replace(/ำ/g, "า");
+        // ถอดวรรณยุกต์ ไม้เอก ไม้โท ไม้ตรี ไม้จัตวา การันต์ สระบน-ล่าง ออก
+        return str.replace(/[\u0e31\u0e34-\u0e3a\u0e47-\u0e4e]/g, "").toLowerCase().trim();
     }
 
     function renderShops(data) {
@@ -434,7 +433,7 @@
 
     function filterShops() {
         const rawQuery = document.getElementById('searchInput').value;
-        const query = cleanText(rawQuery);
+        const query = removeToneMarks(rawQuery);
         
         if (query === '') {
             renderShops(shops);
@@ -442,8 +441,9 @@
         }
 
         const filtered = shops.filter(shop => {
-            const matchName = cleanText(shop.name).includes(query);
-            const matchMenu = shop.menus.some(m => cleanText(m.name).includes(query));
+            const shopNameClean = removeToneMarks(shop.name);
+            const matchName = shopNameClean.includes(query);
+            const matchMenu = shop.menus.some(m => removeToneMarks(m.name).includes(query));
             return matchName || matchMenu;
         });
         
