@@ -373,6 +373,16 @@
         }
     ];
 
+    // ฟังก์ชันปรับข้อความภาษาไทยให้ได้มาตรฐานเดียวกัน (แก้ปัญหาสระ/วรรณยุกต์สลับลำดับ)
+    function cleanText(str) {
+        if (!str) return '';
+        return str
+            .normalize('NFD') // แยกส่วนสระและวรรณยุกต์
+            .replace(/[\u0300-\u036f]/g, '') // ลบอักขระพิเศษ
+            .toLowerCase()
+            .trim();
+    }
+
     function renderShops(data) {
         const grid = document.getElementById('shopGrid');
         grid.innerHTML = '';
@@ -423,7 +433,8 @@
     }
 
     function filterShops() {
-        const query = document.getElementById('searchInput').value.trim().toLowerCase();
+        const rawQuery = document.getElementById('searchInput').value;
+        const query = cleanText(rawQuery);
         
         if (query === '') {
             renderShops(shops);
@@ -431,8 +442,8 @@
         }
 
         const filtered = shops.filter(shop => {
-            const matchName = shop.name.toLowerCase().includes(query);
-            const matchMenu = shop.menus.some(m => m.name.toLowerCase().includes(query));
+            const matchName = cleanText(shop.name).includes(query);
+            const matchMenu = shop.menus.some(m => cleanText(m.name).includes(query));
             return matchName || matchMenu;
         });
         
