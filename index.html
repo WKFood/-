@@ -373,13 +373,15 @@
         }
     ];
 
-    // ฟังก์ชันลบสระ/วรรณยุกต์ไทยเพื่อเปรียบเทียบคำให้เจอแม้มันจะพิมพ์เพี้ยน
-    function removeToneMarks(text) {
+    // ฟังก์ชันย่อยคำ คลีนสระลอย นิคหิต และวรรณยุกต์ทั้งหมด
+    function normalizeThai(text) {
         if (!text) return '';
-        // แปลง สระอำ ให้เป็น สระอา เพื่อให้ค้นหาง่ายขึ้น
-        let str = text.replace(/ำ/g, "า");
-        // ถอดวรรณยุกต์ ไม้เอก ไม้โท ไม้ตรี ไม้จัตวา การันต์ สระบน-ล่าง ออก
-        return str.replace(/[\u0e31\u0e34-\u0e3a\u0e47-\u0e4e]/g, "").toLowerCase().trim();
+        return text
+            .normalize('NFC') // จัดระเบียบรหัสอักขระ
+            .replace(/ำ/g, 'า') // แปลง สระอำ เป็น สระอา
+            .replace(/[\u0e31\u0e34-\u0e3a\u0e47-\u0e4e]/g, '') // ลบสระบน/ล่าง และวรรณยุกต์ทั้งหมด (รวมวงกลมบน)
+            .toLowerCase()
+            .trim();
     }
 
     function renderShops(data) {
@@ -433,7 +435,7 @@
 
     function filterShops() {
         const rawQuery = document.getElementById('searchInput').value;
-        const query = removeToneMarks(rawQuery);
+        const query = normalizeThai(rawQuery);
         
         if (query === '') {
             renderShops(shops);
@@ -441,9 +443,9 @@
         }
 
         const filtered = shops.filter(shop => {
-            const shopNameClean = removeToneMarks(shop.name);
+            const shopNameClean = normalizeThai(shop.name);
             const matchName = shopNameClean.includes(query);
-            const matchMenu = shop.menus.some(m => removeToneMarks(m.name).includes(query));
+            const matchMenu = shop.menus.some(m => normalizeThai(m.name).includes(query));
             return matchName || matchMenu;
         });
         
